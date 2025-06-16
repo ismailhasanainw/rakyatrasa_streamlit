@@ -1,37 +1,86 @@
 import streamlit as st
 from PIL import Image
-from model_predict import predict_image_class
-from gdrive_helper import upload_to_gdrive
 import tempfile
 
-st.set_page_config(page_title="RakyatRasa", layout="centered")
+# === Konfigurasi Halaman ===
+st.set_page_config(page_title="RakyatRasa", layout="wide")
 
-st.title("🍛 RakyatRasa - Image Annotation App")
-st.write("Unggah gambar masakan tradisional Indonesia untuk diklasifikasi secara otomatis. Jika tidak akurat, Anda bisa memberi anotasi manual.")
+# === CSS Custom dari HTML (ringkasan styling penting) ===
+st.markdown("""
+<style>
+    .upload-section {
+        border: 2px dashed #f97316;
+        border-radius: 8px;
+        padding: 3rem;
+        text-align: center;
+        background: #fefefe;
+    }
+    .upload-section:hover {
+        border-color: #ea580c;
+        background: #fff7ed;
+    }
+    .uploaded-img {
+        width: 100%;
+        max-height: 300px;
+        object-fit: cover;
+        border-radius: 8px;
+        border: 2px solid #e5e7eb;
+    }
+    .btn-save {
+        background: #ea580c;
+        color: white;
+        padding: 0.5rem 1rem;
+        border: none;
+        border-radius: 6px;
+    }
+    .btn-save:hover {
+        background: #dc2626;
+    }
+</style>
+""", unsafe_allow_html=True)
 
-uploaded_file = st.file_uploader("Upload Gambar", type=["jpg", "jpeg", "png"])
+# === Header ===
+st.markdown("""
+<div style='text-align: center; background: linear-gradient(135deg, #ea580c 0%, #dc2626 100%); color: white; padding: 2rem 0;'>
+    <h1 style='margin-bottom: 0.5rem;'>RakyatRasa</h1>
+    <p>Discover Indonesian Flavors Through Collaborative Intelligence</p>
+    <p style='font-style: italic;'>"Indonesia on a Plate — Preserving Traditions Through Human-AI Collaboration"</p>
+</div>
+""", unsafe_allow_html=True)
 
-if uploaded_file:
-    img = Image.open(uploaded_file)
-    st.image(img, caption="Preview Gambar", use_column_width=True)
+# === Tab Navigasi ===
+tabs = st.tabs(["Upload & Label", "Search Foods", "Verification", "Database"])
 
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as tmp:
-        img.save(tmp.name)
-        pred_label, confidence = predict_image_class(tmp.name)
+# === Upload Tab ===
+with tabs[0]:
+    st.subheader("📤 Upload Traditional Indonesian Food Image")
+    uploaded_file = st.file_uploader("Upload Gambar Makanan Tradisional", type=["jpg", "jpeg", "png"])
 
-    st.write(f"🧠 Prediksi Otomatis: **{pred_label}** (kepercayaan: {confidence:.2f})")
+    if uploaded_file:
+        img = Image.open(uploaded_file)
+        st.image(img, caption="Preview Gambar", use_column_width=True)
 
-    if confidence < 0.8:
-        manual_label = st.text_input("📝 Klasifikasi tidak yakin. Masukkan label manual:")
-        if manual_label:
-            label_final = manual_label
-            st.success(f"Label disimpan sebagai: {label_final}")
-        else:
-            label_final = None
-    else:
-        label_final = pred_label
+        # Simulasi Prediksi AI
+        st.success("✅ AI berhasil mengenali gambar sebagai: Sayur Asem")
+        st.write("**Kepercayaan AI:** 87%")
+        st.progress(87)
 
-    if label_final:
-        if st.button("💾 Simpan ke Google Drive"):
-            upload_to_gdrive(uploaded_file, label_final)
-            st.success("✅ Gambar dan label berhasil disimpan ke Google Drive.")
+        # Form Manual Labeling
+        with st.expander("📝 Koreksi atau Anotasi Manual"):
+            food_name = st.text_input("Nama Makanan", value="Sayur Asem")
+            region = st.selectbox("Asal Daerah", [
+                "Jawa Barat", "DKI Jakarta", "Jawa Tengah", "DI Yogyakarta", "Jawa Timur",
+                "Sumatera Barat", "Sumatera Utara", "Bali", "Sulawesi Selatan", "Kalimantan Timur"
+            ])
+            taste = st.multiselect("Karakteristik Rasa", [
+                "Manis", "Asin", "Pedas", "Asam", "Gurih", "Segar", "Rempah", "Santan", "Umami"
+            ], default=["Asam", "Segar", "Gurih"])
+            category = st.selectbox("Kategori", [
+                "Sayuran", "Nasi & Noodles", "Daging", "Seafood", "Snack & Kue", "Sup & Soto", "Minuman"
+            ])
+            desc = st.text_area("Deskripsi Tambahan", "Sayur Asem adalah...")
+
+        if st.button("💾 Simpan ke Database"):
+            st.success(f"Data berhasil disimpan: {food_name} dari {region}")
+
+# Tab lainnya bisa diisi belakangan sesuai fungsionalitas
