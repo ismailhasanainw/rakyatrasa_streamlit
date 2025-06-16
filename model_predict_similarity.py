@@ -18,12 +18,10 @@ def predict_by_similarity(uploaded_image_file, features_db: np.ndarray, paths_db
     """
     Predict the label of the uploaded image by comparing it to the database of features.
     """
-    try:
-        image = Image.open(uploaded_image_file).convert("RGB")
-        uploaded_feature = extract_image_features(image)
-    except Exception as e:
-        return "Gagal memproses gambar", 0.0
-
+    
+    uploaded_image = Image.open(image_file).convert("RGB")
+    uploaded_feature = extract_features(uploaded_image)
+    uploaded_feature = uploaded_feature.reshape(1, -1) 
     similarities = cosine_similarity(uploaded_feature, features_db)[0]
     best_idx = int(np.argmax(similarities))
     best_score = float(similarities[best_idx])
