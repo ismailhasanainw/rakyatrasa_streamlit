@@ -9,6 +9,11 @@ def load_and_preprocess(img_path, size=(128, 128)):
     img = Image.open(img_path).convert("L").resize(size)
     return img
 
+def extract_feature_vector(image: Image.Image) -> np.ndarray:
+    image = image.resize((224, 224))
+    image = np.array(image).astype('float32') / 255.0
+    return image.flatten()
+
 def extract_features_from_folder(folder_path):
     features = []
     paths = []
