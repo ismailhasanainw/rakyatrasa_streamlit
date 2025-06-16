@@ -1,8 +1,8 @@
 import os
 import numpy as np
 from PIL import Image
-from keras.applications.mobilenet_v2 import MobileNetV2, preprocess_input
-from keras.preprocessing import image
+from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2, preprocess_input
+from tensorflow.keras.preprocessing import image
 from sklearn.metrics.pairwise import cosine_similarity
 
 # Load model untuk ekstraksi fitur
