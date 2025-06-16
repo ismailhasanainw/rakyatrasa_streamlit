@@ -1,6 +1,7 @@
 from PIL import Image
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
+from feature_extraction import extract_features
 import imagehash
 import io
 import os
