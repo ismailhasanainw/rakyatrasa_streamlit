@@ -1,9 +1,10 @@
 from PIL import Image
 import numpy as np
-import os
 from sklearn.metrics.pairwise import cosine_similarity
 import imagehash
 import io
+import os
+
 
 def extract_image_features(image: Image.Image) -> np.ndarray:
     """
@@ -12,31 +13,23 @@ def extract_image_features(image: Image.Image) -> np.ndarray:
     hash_val = imagehash.phash(image)
     return np.array(hash_val.hash, dtype=np.float32).flatten().reshape(1, -1)
 
-def predict_by_similarity(uploaded_image: Image.Image, dataset_folder: str) -> tuple[str, float]:
+
+def predict_by_similarity(uploaded_image_file, features_db: np.ndarray, paths_db: list[str]) -> tuple[str, float]:
     """
-    Compare uploaded image to images in dataset folder using hash similarity.
+    Predict the label of the uploaded image by comparing it to the database of features.
     """
-    uploaded_features = extract_image_features(uploaded_image)
+    try:
+        image = Image.open(uploaded_image_file).convert("RGB")
+        uploaded_feature = extract_image_features(image)
+    except Exception as e:
+        return "Gagal memproses gambar", 0.0
 
-    best_score = -1
-    best_label = "Tidak diketahui"
+    similarities = cosine_similarity(uploaded_feature, features_db)[0]
+    best_idx = int(np.argmax(similarities))
+    best_score = float(similarities[best_idx])
 
-    for label_folder in os.listdir(dataset_folder):
-        label_path = os.path.join(dataset_folder, label_folder)
-        if not os.path.isdir(label_path):
-            continue
+    # Ekstrak label dari path
+    best_path = paths_db[best_idx]
+    label = os.path.basename(os.path.dirname(best_path))
 
-        for fname in os.listdir(label_path):
-            if fname.lower().endswith(('.png', '.jpg', '.jpeg')):
-                img_path = os.path.join(label_path, fname)
-                try:
-                    img = Image.open(img_path).convert("RGB")
-                    img_features = extract_image_features(img)
-                    score = cosine_similarity(uploaded_features, img_features)[0][0]
-                    if score > best_score:
-                        best_score = score
-                        best_label = label_folder
-                except Exception as e:
-                    continue
-
-    return best_label, float(best_score)
+    return label, best_score * 100
