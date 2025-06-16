@@ -1,16 +1,15 @@
 import os
 import numpy as np
 from PIL import Image
-import tensorflow as tf
 from tqdm import tqdm
+import imagehash
+import pickle
 
-def load_and_preprocess(img_path, size=(224, 224)):
-    img = Image.open(img_path).convert("RGB").resize(size)
-    img = np.array(img) / 255.0
+def load_and_preprocess(img_path, size=(128, 128)):
+    img = Image.open(img_path).convert("L").resize(size)
     return img
 
 def extract_features(folder_path):
-    feature_model = tf.keras.applications.MobileNetV2(include_top=False, pooling='avg')
     features = []
     paths = []
 
@@ -18,8 +17,15 @@ def extract_features(folder_path):
         if fname.lower().endswith(('.jpg', '.jpeg', '.png')):
             path = os.path.join(folder_path, fname)
             img = load_and_preprocess(path)
-            feat = feature_model.predict(np.expand_dims(img, axis=0))[0]
-            features.append(feat)
+            phash = imagehash.phash(img)
+            vector = np.array([int(b) for b in bin(int(str(phash), 16))[2:].zfill(64)])
+            features.append(vector.astype(np.float32))
             paths.append(path)
 
     return np.array(features), paths
+
+def save_features_and_paths(features, paths, out_dir="dataset"):
+    os.makedirs(out_dir, exist_ok=True)
+    np.save(os.path.join(out_dir, "features.npy"), features)
+    with open(os.path.join(out_dir, "paths.pkl"), "wb") as f:
+        pickle.dump(paths, f)
