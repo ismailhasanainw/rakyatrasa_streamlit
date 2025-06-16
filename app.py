@@ -52,7 +52,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # === Load Fitur & Path Dataset ===
-features_db = np.load("dataset/features.npy")
+features_db = np.load("dataset/features.npy", allow_pickle=True)
 with open("dataset/paths.pkl", "rb") as f:
     paths_db = pickle.load(f)
 
