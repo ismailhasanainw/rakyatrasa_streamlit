@@ -1,11 +1,13 @@
 import streamlit as st
 from PIL import Image
-import tempfile
+import numpy as np
+import pickle
+from model_predict_similarity import predict_by_similarity
 
 # === Konfigurasi Halaman ===
 st.set_page_config(page_title="RakyatRasa", layout="wide")
 
-# === CSS Custom dari HTML (ringkasan styling penting) ===
+# === CSS Custom dari HTML ===
 st.markdown("""
 <style>
     .upload-section {
@@ -48,6 +50,11 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
+# === Load Fitur & Path Dataset ===
+features_db = np.load("dataset/features.npy")
+with open("dataset/paths.pkl", "rb") as f:
+    paths_db = pickle.load(f)
+
 # === Tab Navigasi ===
 tabs = st.tabs(["Upload & Label", "Search Foods", "Verification", "Database"])
 
@@ -60,14 +67,15 @@ with tabs[0]:
         img = Image.open(uploaded_file)
         st.image(img, caption="Preview Gambar", use_column_width=True)
 
-        # Simulasi Prediksi AI
-        st.success("✅ AI berhasil mengenali gambar sebagai: Sayur Asem")
-        st.write("**Kepercayaan AI:** 87%")
-        st.progress(87)
+        # 🔍 Prediksi AI Berdasarkan Kemiripan Visual
+        label_pred, confidence = predict_by_similarity(uploaded_file, features_db, paths_db)
+        st.success(f"✅ AI mengenali gambar sebagai: {label_pred}")
+        st.write(f"**Kepercayaan AI (kemiripan visual):** {confidence:.2f}%")
+        st.progress(int(confidence))
 
-        # Form Manual Labeling
+        # === Form Manual Labeling ===
         with st.expander("📝 Koreksi atau Anotasi Manual"):
-            food_name = st.text_input("Nama Makanan", value="Sayur Asem")
+            food_name = st.text_input("Nama Makanan", value=label_pred)
             region = st.selectbox("Asal Daerah", [
                 "Jawa Barat", "DKI Jakarta", "Jawa Tengah", "DI Yogyakarta", "Jawa Timur",
                 "Sumatera Barat", "Sumatera Utara", "Bali", "Sulawesi Selatan", "Kalimantan Timur"
@@ -78,7 +86,7 @@ with tabs[0]:
             category = st.selectbox("Kategori", [
                 "Sayuran", "Nasi & Noodles", "Daging", "Seafood", "Snack & Kue", "Sup & Soto", "Minuman"
             ])
-            desc = st.text_area("Deskripsi Tambahan", "Sayur Asem adalah...")
+            desc = st.text_area("Deskripsi Tambahan", f"Deskripsi tentang {label_pred}...")
 
         if st.button("💾 Simpan ke Database"):
             st.success(f"Data berhasil disimpan: {food_name} dari {region}")
