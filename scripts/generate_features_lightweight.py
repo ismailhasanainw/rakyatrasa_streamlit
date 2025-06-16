@@ -1,50 +1,34 @@
-# ============================================
-# Script: generate_features_lightweight.py
-# Fungsi: Generate fitur ringan dari dataset gambar tanpa TensorFlow
-#         Menggunakan histogram warna sebagai fitur visual sederhana
-# ============================================
-
+# scripts/generate_features_lightweight.py
 import os
 import numpy as np
 from PIL import Image
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.preprocessing import normalize
+
+# === SETTING ===
+DATASET_DIR = "dataset/train/images"
+OUTPUT_FEATURES = "dataset/features.npy"
+OUTPUT_PATHS = "dataset/paths.pkl"
+
+# === READ FILE PATHS ===
+image_paths = []
+for root, _, files in os.walk(DATASET_DIR):
+    for file in files:
+        if file.lower().endswith((".jpg", ".jpeg", ".png")):
+            image_paths.append(os.path.join(root, file))
+
+# === IMAGE TO TEXT FEATURES (Simulasi TF-IDF: pakai nama folder + nama file) ===
+texts = [os.path.basename(os.path.dirname(p)) + " " + os.path.basename(p) for p in image_paths]
+vectorizer = TfidfVectorizer()
+features = vectorizer.fit_transform(texts).toarray()
+
+# === Normalize fitur ===
+features = normalize(features)
+
+# === Save ===
+np.save(OUTPUT_FEATURES, features)
 import pickle
-from tqdm import tqdm
-
-# ====== Konfigurasi Folder Dataset ======
-ROOT_DIR = "dataset_drive"  # Ganti dengan lokasi folder gambar kamu
-OUTPUT_FEATURES = "features.npy"
-OUTPUT_PATHS = "paths.pkl"
-
-# ====== Fungsi Ekstraksi Histogram Fitur ======
-def extract_color_histogram(img_path):
-    try:
-        img = Image.open(img_path).convert("RGB")
-        img = img.resize((128, 128))
-        hist = img.histogram()  # 256*3 = 768 dimensi
-        hist = np.array(hist) / sum(hist)  # Normalisasi
-        return hist.astype(np.float32)
-    except Exception as e:
-        print(f"[!] Gagal baca {img_path}: {e}")
-        return None
-
-# ====== Proses Semua Gambar ======
-features = []
-paths = []
-
-for root, _, files in os.walk(ROOT_DIR):
-    for fname in files:
-        if fname.lower().endswith((".jpg", ".jpeg", ".png")):
-            path = os.path.join(root, fname)
-            feat = extract_color_histogram(path)
-            if feat is not None:
-                features.append(feat)
-                paths.append(path)
-
-# ====== Simpan Output ======
-np.save(OUTPUT_FEATURES, np.array(features))
 with open(OUTPUT_PATHS, "wb") as f:
-    pickle.dump(paths, f)
+    pickle.dump(image_paths, f)
 
-print(f"✅ Berhasil generate fitur: {len(features)} gambar")
-print(f"→ features.npy | {OUTPUT_FEATURES}")
-print(f"→ paths.pkl    | {OUTPUT_PATHS}")
+print(f"[✓] Saved {len(image_paths)} features to {OUTPUT_FEATURES}")
