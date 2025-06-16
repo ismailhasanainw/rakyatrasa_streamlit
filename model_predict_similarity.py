@@ -14,11 +14,11 @@ def extract_image_features(image: Image.Image) -> np.ndarray:
     return np.array(hash_val.hash, dtype=np.float32).flatten().reshape(1, -1)
 
 
-def predict_by_similarity(uploaded_image_file, features_db: np.ndarray, paths_db: list[str]) -> tuple[str, float]:
+def predict_by_similarity(image_file, features_db: np.ndarray, paths_db: list[str]) -> tuple[str, float]:
     """
     Predict the label of the uploaded image by comparing it to the database of features.
     """
-    
+
     uploaded_image = Image.open(image_file).convert("RGB")
     uploaded_feature = extract_features(uploaded_image)
     uploaded_feature = uploaded_feature.reshape(1, -1) 
