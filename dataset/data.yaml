@@ -1,0 +1,13 @@
+train: ../train/images
+val: ../valid/images
+test: ../test/images
+
+nc: 20
+names: ['Ayam-Betutu', 'Ayam-Bumbu-Rujak', 'Ayam-Goreng-Lengkuas', 'Bubur-Manado', 'Gado-Gado', 'Gudeg-Jogja', 'Gulai-Ikan-Mas', 'Kerak-Telor', 'Laksa-Bogor', 'Lumpia-Semarang', 'Mie-Aceh', 'Papeda', 'Pempek-Palembang', 'Rawon-Surabaya', 'Rendang', 'Rujak-Cingur', 'Sate-Ayam', 'Sate-Lilit', 'Soto-Lamongan', 'Tahu-Telur']
+
+roboflow:
+  workspace: president-university-y2m5p
+  project: indonesian-traditional-cuisine
+  version: 1
+  license: CC BY 4.0
+  url: https://universe.roboflow.com/president-university-y2m5p/indonesian-traditional-cuisine/dataset/1
