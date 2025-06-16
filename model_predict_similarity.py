@@ -1,34 +1,42 @@
-import os
-import numpy as np
 from PIL import Image
-from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2, preprocess_input
-from tensorflow.keras.preprocessing import image
+import numpy as np
+import os
 from sklearn.metrics.pairwise import cosine_similarity
+import imagehash
+import io
 
-# Load model untuk ekstraksi fitur
-feature_model = tf.keras.applications.MobileNetV2(include_top=False, pooling='avg')
+def extract_image_features(image: Image.Image) -> np.ndarray:
+    """
+    Convert image to grayscale hash vector for similarity comparison.
+    """
+    hash_val = imagehash.phash(image)
+    return np.array(hash_val.hash, dtype=np.float32).flatten().reshape(1, -1)
 
-def load_and_preprocess(image_file, size=(224, 224)):
-    img = Image.open(image_file).convert("RGB").resize(size)
-    img = np.array(img) / 255.0
-    return img
+def predict_by_similarity(uploaded_image: Image.Image, dataset_folder: str) -> tuple[str, float]:
+    """
+    Compare uploaded image to images in dataset folder using hash similarity.
+    """
+    uploaded_features = extract_image_features(uploaded_image)
 
-def predict_by_similarity(uploaded_file, features_db, paths_db, labels_folder="dataset/train/labels/"):
-    img = load_and_preprocess(uploaded_file)
-    img_feat = feature_model.predict(np.expand_dims(img, axis=0))[0].reshape(1, -1)
+    best_score = -1
+    best_label = "Tidak diketahui"
 
-    sims = cosine_similarity(img_feat, features_db)[0]
-    best_idx = np.argmax(sims)
-    best_match_path = paths_db[best_idx]
-    confidence = sims[best_idx] * 100
+    for label_folder in os.listdir(dataset_folder):
+        label_path = os.path.join(dataset_folder, label_folder)
+        if not os.path.isdir(label_path):
+            continue
 
-    fname = os.path.basename(best_match_path)
-    label_file = fname.rsplit(".", 1)[0] + ".txt"
-    label_path = os.path.join(labels_folder, label_file)
+        for fname in os.listdir(label_path):
+            if fname.lower().endswith(('.png', '.jpg', '.jpeg')):
+                img_path = os.path.join(label_path, fname)
+                try:
+                    img = Image.open(img_path).convert("RGB")
+                    img_features = extract_image_features(img)
+                    score = cosine_similarity(uploaded_features, img_features)[0][0]
+                    if score > best_score:
+                        best_score = score
+                        best_label = label_folder
+                except Exception as e:
+                    continue
 
-    label = "Tidak diketahui"
-    if os.path.exists(label_path):
-        with open(label_path, "r") as f:
-            label = f.read().strip()
-
-    return label, confidence
+    return best_label, float(best_score)
