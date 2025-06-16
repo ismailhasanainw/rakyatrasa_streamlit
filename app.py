@@ -3,6 +3,7 @@ from PIL import Image
 import numpy as np
 import pickle
 from model_predict_similarity import predict_by_similarity
+from gdrive_helper import upload_image_to_drive, save_metadata_to_csv
 
 # === Konfigurasi Halaman ===
 st.set_page_config(page_title="RakyatRasa", layout="wide")
@@ -89,6 +90,19 @@ with tabs[0]:
             desc = st.text_area("Deskripsi Tambahan", f"Deskripsi tentang {label_pred}...")
 
         if st.button("💾 Simpan ke Database"):
-            st.success(f"Data berhasil disimpan: {food_name} dari {region}")
+            file_name = f"{food_name.replace(' ', '_').lower()}_user.jpg"
+            file_id = upload_image_to_drive(uploaded_file, file_name)
+
+            save_metadata_to_csv(
+                food_name=food_name,
+                region=region,
+                taste=taste,
+                category=category,
+                desc=desc,
+                gdrive_file_id=file_id
+            )
+
+            st.success(f"✅ Data dan gambar berhasil disimpan ke Google Drive")
+            st.info(f"ID File GDrive: {file_id}")
 
 # Tab lainnya bisa diisi belakangan sesuai fungsionalitas
