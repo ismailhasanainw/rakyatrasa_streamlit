@@ -66,7 +66,7 @@ with tabs[0]:
 
     if uploaded_file:
         img = Image.open(uploaded_file)
-        st.image(img, caption="Preview Gambar", use_column_width=True)
+        st.image(img, caption="Preview Gambar", use_container_width=True)
 
         # 🔍 Prediksi AI Berdasarkan Kemiripan Visual
         label_pred, confidence = predict_by_similarity(uploaded_file, features_db, paths_db)
