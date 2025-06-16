@@ -9,20 +9,21 @@ def load_and_preprocess(img_path, size=(128, 128)):
     img = Image.open(img_path).convert("L").resize(size)
     return img
 
-def extract_features(folder_path):
+def extract_features_from_folder(folder_path):
     features = []
     paths = []
-
     for fname in tqdm(os.listdir(folder_path)):
         if fname.lower().endswith(('.jpg', '.jpeg', '.png')):
             path = os.path.join(folder_path, fname)
             img = load_and_preprocess(path)
-            phash = imagehash.phash(img)
-            vector = np.array([int(b) for b in bin(int(str(phash), 16))[2:].zfill(64)])
-            features.append(vector.astype(np.float32))
+            feat = extract_feature_vector(img)
+            features.append(feat)
             paths.append(path)
-
     return np.array(features), paths
+
+def extract_features(image):
+    img = image.resize((224, 224)).convert("RGB")
+    return extract_feature_vector(img)
 
 def save_features_and_paths(features, paths, out_dir="dataset"):
     os.makedirs(out_dir, exist_ok=True)
